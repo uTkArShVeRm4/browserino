@@ -1,13 +1,13 @@
 #![allow(dead_code)]
-use anyhow::Error;
-use std::{any::Any, fs};
+use std::fs;
+#[derive(Debug, PartialEq)]
 pub enum TagKind {
     HTML,
     HEAD,
     P,
     NoTag,
 }
-
+#[derive(Debug)]
 pub struct Tag {
     kind: TagKind,
     closing: bool,
@@ -42,11 +42,10 @@ impl Row {
             "p" => TagKind::P,
             _ => TagKind::NoTag,
         };
-        println!("{:?} {closing}", kind.type_id());
-        Some(Tag {
-            kind: TagKind::HTML,
-            closing: true,
-        })
+        match kind {
+            TagKind::NoTag => return None,
+            _ => return Some(Tag { kind, closing }),
+        }
     }
 }
 pub struct Document {
@@ -71,12 +70,22 @@ impl Document {
 }
 
 pub fn parser() {
-    let mut stack: Vec<u8> = Vec::new();
+    let mut stack: Vec<Tag> = Vec::new();
 
     let doc = Document::open("browser/index.html").unwrap();
 
     for item in doc.rows {
-        item.find_tags();
-        println!("{}", item.string);
+        let tag = item.find_tags();
+        if let Some(tag) = tag {
+            if !tag.closing {
+                println!("Pushing tag {:?} on the stack", tag);
+                stack.push(tag);
+            } else if tag.closing && stack.last().unwrap().kind == tag.kind {
+                stack.pop();
+                println!("Popping tag {:?} off the stack", tag);
+            };
+        }
     }
+
+    println!("{:?}", stack);
 }

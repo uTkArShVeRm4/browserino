@@ -1,6 +1,7 @@
 use fltk::{app, prelude::*, window::Window};
 mod parser;
 use parser::parser;
+use std::fs;
 
 fn main() {
     // let app = app::App::default();
@@ -10,4 +11,6 @@ fn main() {
     // wind.show();
     // app.run().unwrap();
     parser();
+    let contents = fs::read_to_string("browser/index.html").unwrap();
+    print!("{}", contents);
 }
